@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require("cors");
 const bodyParser = require('body-parser');
 const dbConnect = require("./config/dbConnect");
 
@@ -7,8 +8,9 @@ const dotenv = require('dotenv').config();
 
 const authRoute = require("./routes/authRoute");
 
+app.use(cors());
 // Se define el puerto
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Se conecta a la base de datos
 dbConnect();
@@ -19,6 +21,6 @@ app.use(bodyParser.json());
 app.use('/api/user', authRoute);
 
 // Escuchamos el puerto
-app.listen(port, () => {
-   console.log(`Server is running at http://localhost:${port}`);
+app.listen(PORT, () => {
+   console.log(`Server is running at http://localhost:${PORT}`);
 })
