@@ -7,6 +7,9 @@ const app = express();
 const dotenv = require('dotenv').config();
 
 const authRoute = require("./routes/authRoute");
+const {notFound, errorHandler} = require("./middlewares/errorHandler");
+
+const cookie = require('cookie-parser');
 
 app.use(cors());
 // Se define el puerto
@@ -16,9 +19,17 @@ const PORT = process.env.PORT || 3000;
 dbConnect();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cookie());
 
 // Cargamos las rutas
-app.use('/api/user', authRoute);
+app.use('/api/v1', authRoute);
+
+app.get('/', (req, res) => {
+   res.send('Hello World!');
+});
+
+app.use(notFound);
+app.use(errorHandler);
 
 // Escuchamos el puerto
 app.listen(PORT, () => {
