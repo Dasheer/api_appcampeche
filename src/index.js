@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.use(cookie());
 
 // Cargamos las rutas
-app.use('/api/v1', authRoute);
+app.use('/v1', authRoute);
 
 app.get('/', (req, res) => {
    res.send('Hello World!');
