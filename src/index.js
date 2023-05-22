@@ -7,6 +7,7 @@ const app = express();
 const dotenv = require('dotenv').config();
 
 const authRoute = require("./routes/authRoute");
+const postRoute = require("./routes/postRoute");
 const {notFound, errorHandler} = require("./middlewares/errorHandler");
 
 const cookie = require('cookie-parser');
@@ -23,6 +24,7 @@ app.use(cookie());
 
 // Cargamos las rutas
 app.use('/v1', authRoute);
+app.use('/v1', postRoute);
 
 app.get('/', (req, res) => {
    res.send('Hello World!');

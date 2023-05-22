@@ -3,64 +3,66 @@ const User = require('../models/userModel');
 const asyncHandler = require('express-async-handler');
 
 // Create Post
-const createPublication = asyncHandler(async (req, res) => {
+const createPost = asyncHandler(async (req, res) => {
 
     try {
         const {id} = req.params;
         const {title, description, image} = req.body;
 
-        const user = await User.findById(id);
-
-        if (!user) {
-            return res.status(404).json({message: 'User not found'});
-        }
-
         // Create post
-        const post = await Post.create({
+        const post = new Post({
             author: id,
             title,
             description,
             image,
+            createdAt: new Date()
         });
 
         // Save post
-        await post.save();
+        const createPost = await post.save();
 
-        //const newPost = await Post.create(req.body);
+        await User.findByIdAndUpdate(id, { $push: { post: createPost._id } });
 
-        // Push post to user
-        //console.log(post._id);
-        user.post.push(post._id);
-        //user.posts.push(post._id);
-        await user.save();
-
-        res.status(201).json(post);
+        res.status(201).json(createPost);
     } catch (error) {
-        console.log(error);
-        throw new Error('User not found');
+        res.status(500).json({error: error.message});
     }
 });
 
 // Update Post
 const updatePost = asyncHandler(async (req, res) => {
-    const { id } = req.params;
 
     try {
-        const updatePost = await Post.findByIdAndUpdate(id, {
-            title: req?.body?.title,
-            description: req?.body?.description,
-            image: req?.body?.image,
-        }, { new: true });
+
+        const { idPost } = req.params;
+
+        const {title, description, image} = req.body;
+
+        const post = await Post.findById(idPost);
+
+        if(!post) {
+            return res.status(404).json({message: 'Post not found'});
+        }
+
+        post.title = title;
+        post.description = description;
+        post.image = image;
+
+        const updatePost = await post.save();
+
         res.status(201).json({message: 'Post updated'});
     } catch (error) {
-        throw new Error('Post not found');
+        res.status(500).json({error: error.message});
     }
 });
 
 // Get All Posts by User
 const getPosts = asyncHandler(async (req, res) => {
     try {
-        const getPosts = await Post.find();
+        const {id} = req.params;
+
+        const getPosts = await Post.find({ author: id});
+
         res.json(getPosts);
     } catch (error) {
         res.status(500).json({error: error.message});
@@ -69,24 +71,60 @@ const getPosts = asyncHandler(async (req, res) => {
 
 // Get Post by Id
 const getPostById = asyncHandler(async (req, res) => {
-   const { id } = req.params;
    try {
-       const getPost = await Post.findById(id);
-       res.json(getPost);
+       const { idUser, idPost } = req.params;
+
+       const user = await User.findById(idUser);
+       if(!user) {
+           return res.status(404).json({message: 'User not found'});
+       }
+
+       const post = await Post.findById({_id: idPost, author: idUser});
+       if(!post) {
+           return res.status(404).json({message: 'Post not found'});
+       }
+
+       res.json(post);
    } catch (error) {
-       throw new Error('Post not found');
+       res.status(500).json({error: error.message});
    }
+});
+
+// Get Posts
+const getAllPosts = asyncHandler(async (req, res) => {
+    try {
+        const {id} = req.params;// Obtén el ID del usuario actual desde la solicitud (asumiendo que lo tienes disponible)
+
+        // Obtén todos los posts del usuario actual
+        const userPosts = await Post.find({ id });
+
+        // Obtén todos los posts de otros usuarios
+        const otherPosts = await Post.find({ userId: { $ne: id } });
+
+        const allPosts = [...userPosts, ...otherPosts]; // Combina los posts del usuario actual y los posts de otros usuarios
+
+        res.json(allPosts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 
 // Delete Post
 const deletePost = asyncHandler(async (req, res) => {
-    const { id } = req.params;
     try {
-        const deletePost = await Post.findByIdAndDelete(id);
+        const { id } = req.params;
+
+        const post = await Post.findById(id);
+        if(!post) {
+            return res.status(404).json({message: 'Post not found'});
+        }
+
+        await post.remove();
+
         res.status(204).json({message: 'Post deleted'});
     } catch (error) {
-        throw new Error('Post not found');
+        res.status(500).json({error: error.message});
     }
 });
-module.exports = {createPublication, getPosts, getPostById, deletePost, updatePost};
+module.exports = {createPost, getPosts, deletePost, updatePost, getAllPosts, getPostById};
