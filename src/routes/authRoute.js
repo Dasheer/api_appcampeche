@@ -1,7 +1,7 @@
 const express = require('express');
-const { createUser, loginUser, getAllUsers, getUser, deleteUser, updateUser, handleRefreshToken, logoutUser, validToken, authCtl
-} = require('../controllers/userController');
+const { createUser, loginUser, getUser, deleteUser, validToken, authCtl} = require('../controllers/userController');
 const auth = require('../middlewares/auth');
+const {authenticateToken} = require("../middlewares/authenticateToken");
 
 const router = express.Router();
 
@@ -14,9 +14,9 @@ router.post('/login', loginUser);
 router.post('/isValidToken', validToken);
 
 
-/*router.get('/currentUser', authenticateToken, getUser);
+router.get('/currentUser', authenticateToken, getUser);
 
-router.get('/users', getAllUsers);
+/*router.get('/users', getAllUsers);
 
 router.get('/:id/post', getPosts)
 

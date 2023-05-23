@@ -154,20 +154,20 @@ const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 // Get User
-const getUser = asyncHandler(async (req, res) => {
+const getUser = async (req, res) => {
    try {
-       const userId = req.user._id;
-       const getUser = await User.findById(userId);
+       const user = req.user;
+       //const getUser = await User.findById(userId);
 
-       if (getUser) {
-           res.json(getUser);
+       if (user) {
+           res.json(user);
        } else {
            res.status(404).json({ message: 'User not found' });
        }
    } catch (error) {
        res.status(500).json({ message: 'Server error' });
    }
-});
+};
 
 // Delete User
 const deleteUser = asyncHandler(async (req, res) => {

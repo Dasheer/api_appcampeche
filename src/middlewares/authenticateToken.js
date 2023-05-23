@@ -1,37 +1,27 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-const decodeToken = require("../config/decodeToken");
-const {generateRefreshToken} = require("../config/refreshToken");
-
-// Middleware para verificar y decodificar el token JWT
 const authenticateToken = async (req, res, next) => {
 
-    const token = req.cookies.refreshToken;
+    try {
+        const token = req.header("x-auth-token");
 
-    if (token) {
-        try {
-            // Verificar y decodificar el token
-            const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+        if (!token) return res.status(401).json({ msg: "No auth token, access denied" });
 
-            // Obtener el ID del usuario desde el token decodificado
-            const userId = decoded.id;
+        const  verified = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Buscar el usuario en la base de datos por su ID
-            const user = await User.findById(userId);
+        if (!verified)
+            return res
+                .status(401)
+                .json({ msg: "Token verification failed, authorization denied." });
 
-            if (user) {
-                // Establecer el usuario en el objeto 'req'
-                req.user = user;
-                next();
-            } else {
-                res.status(401).json({ message: 'User not found' });
-            }
-        } catch (error) {
-            res.status(401).json({ message: 'Invalid token' });
-        }
-    } else {
-        res.status(401).json({ message: 'No token found' });
+        const user = await User.findById(verified._id);
+
+        req.user = user;
+        req.token = token;
+        next();
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
