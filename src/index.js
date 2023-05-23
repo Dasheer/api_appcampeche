@@ -11,6 +11,7 @@ const postRoute = require("./routes/postRoute");
 const {notFound, errorHandler} = require("./middlewares/errorHandler");
 
 const cookie = require('cookie-parser');
+const {authenticateToken} = require("./middlewares/authenticateToken");
 
 app.use(cors());
 // Se define el puerto

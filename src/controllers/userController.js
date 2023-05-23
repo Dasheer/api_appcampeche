@@ -136,13 +136,17 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
 // Get User
 const getUser = asyncHandler(async (req, res) => {
-   const { id } = req.params;
-
    try {
-       const getUser = await User.findById(id);
-       res.json(getUser);
+       const userId = req.user._id;
+       const getUser = await User.findById(userId);
+
+       if (getUser) {
+           res.json(getUser);
+       } else {
+           res.status(404).json({ message: 'User not found' });
+       }
    } catch (error) {
-       throw new Error('User not found');
+       res.status(500).json({ message: 'Server error' });
    }
 });
 
