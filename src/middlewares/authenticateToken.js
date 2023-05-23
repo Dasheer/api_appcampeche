@@ -8,7 +8,7 @@ const authenticateToken = async (req, res, next) => {
 
         if (!token) return res.status(401).json({ msg: "No auth token, access denied" });
 
-        const  verified = jwt.verify(token, process.env.JWT_SECRET);
+        const  verified = jwt.verify(token, "passwordKey");
 
         if (!verified)
             return res
@@ -17,7 +17,7 @@ const authenticateToken = async (req, res, next) => {
 
         const user = await User.findById(verified._id);
 
-        req.user = user;
+        req.user = verified.id;
         req.token = token;
         next();
     } catch (err) {
