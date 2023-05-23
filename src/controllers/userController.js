@@ -4,62 +4,81 @@ const asyncHandler = require('express-async-handler');
 const {generateAccessToken} = require("../config/jwToken");
 const {generateRefreshToken} = require("../config/refreshToken");
 const jwt = require("jsonwebtoken");
-const {decode} = require("jsonwebtoken");
+const bcryptjs = require("bcryptjs");
 
 // Create User
-const createUser = asyncHandler (async (req, res) => {
-    const email = req.body.email;
-    const findUser = await User.findOne({ email });
-    if (!findUser) {
-        const newUser = await User.create(req.body);
-        res.status(201).json({
-            status: 'User created successfully',
-            data: {
-                user: newUser,
-            },
+const createUser = async (req, res) => {
+    try {
+        const { name, lastname, email, cellphone, password } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({msg: "User already exists"})
+        }
+
+        const hashedPassword = await bcryptjs.hash(password, 8);
+
+        let user = new User({
+            name,
+            lastname,
+            email,
+            cellphone,
+            password: hashedPassword,
         });
-    } else {
-        res.json({
-            msg: 'User already exists',
-            success: false,
-        })
+        user = await user.save();
+        res.json(user);
+
+    } catch (error) {
+        res.status(500).json({error: error.message});
     }
-});
+
+}
 
 // Login User
-const loginUser = asyncHandler (async (req, res) => {
-    const { email, password } = req.body;
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        // Validar que el usuario exista
+        const findUser = await User.findOne({ email });
 
-    // Validar que el usuario exista
-    const findUser = await User.findOne({ email });
-    if (findUser && (await findUser.isPasswordMatched(password))) {
+        if (!findUser) {
+            return res.status(401).json({mdg: "User not found"})
+        }
 
-        const refreshToken = await generateRefreshToken(findUser?._id);
-        const updateUser = await User.findByIdAndUpdate(
-            findUser.id,
-            { refreshToken },
-            { new: true }
-        );
+        const isMatch = await bcryptjs.compare(password, findUser.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: "Incorrect password." });
+        }
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            maxAge: 72 * 60 * 60 * 1000,
-            //path: '/api/v1/refreshToken',
+        const token = jwt.sign({ id: findUser._id }, "passwordKey");
+        res.json({ token, ...findUser._doc })
+    } catch (error) {
+        res.status(401).json({
+            message: error.message,
         });
-
-        res.json({
-            _id: findUser?._id,
-            name: findUser?.name,
-            lastname: findUser?.lastname,
-            email: findUser?.email,
-            cellphone: findUser?.cellphone,
-            token: generateAccessToken(findUser?._id),
-        });
-    } else {
-        throw new Error('Invalid email or password');
     }
-});
+}
 
+
+const validToken = async (req, res) => {
+    try {
+        const token = req.header("x-auth-token");
+        if (!token) return res.json(false);
+        const verify = jwt.verify(token, process.env.JWT_SECRET);
+        if (!verify) return res.json(false);
+
+        const user = await User.findById(verify.id);
+        if (!user) return res.json(false);
+        res.json(true);
+    } catch (error) {
+
+    }
+}
+
+const authCtl = async (req, res) => {
+    const user = await User.findById(res.user);
+    res.json({...user._doc, token: res.token});
+}
 // Handle Refresh Token
 const handleRefreshToken = asyncHandler(async (req, res) => {
     const cookie = req.cookies;
@@ -161,4 +180,4 @@ const deleteUser = asyncHandler(async (req, res) => {
    }
 });
 
-module.exports = {createUser, loginUser, getAllUsers, getUser, deleteUser, updateUser, handleRefreshToken, logoutUser};
+module.exports = {createUser, loginUser, validToken, authCtl, getAllUsers, getUser, deleteUser, updateUser, handleRefreshToken, logoutUser};

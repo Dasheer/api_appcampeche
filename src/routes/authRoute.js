@@ -1,14 +1,20 @@
 const express = require('express');
-const { createUser, loginUser, getAllUsers, getUser, deleteUser, updateUser, handleRefreshToken, logoutUser} = require('../controllers/userController');
-const {createPublication, getPosts, getPostById, deletePost, updatePost} = require("../controllers/postController");
-const { authenticateToken } = require('../middlewares/authenticateToken');
+const { createUser, loginUser, getAllUsers, getUser, deleteUser, updateUser, handleRefreshToken, logoutUser, validToken, authCtl
+} = require('../controllers/userController');
+const auth = require('../middlewares/auth');
+
 const router = express.Router();
+
+router.get('/', auth, authCtl)
 
 router.post('/register', createUser);
 
 router.post('/login', loginUser);
 
-router.get('/currentUser', authenticateToken, getUser);
+router.post('/isValidToken', validToken);
+
+
+/*router.get('/currentUser', authenticateToken, getUser);
 
 router.get('/users', getAllUsers);
 
@@ -18,7 +24,7 @@ router.get('/refresh', handleRefreshToken);
 
 router.get('/logout', logoutUser);
 
-router.put('/:id', updateUser);
+router.put('/:id', updateUser);*/
 
 //router.put('/:id/post/:id', updatePost);
 
