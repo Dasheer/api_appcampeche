@@ -15,8 +15,7 @@ const postSchema = new mongoose.Schema({
         trim: true,
     },
     image: [{
-        type: String,
-        trim: true,
+        type: String
     }],
     category:{
         type: String

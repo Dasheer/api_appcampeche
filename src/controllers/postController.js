@@ -7,13 +7,14 @@ const createPost = asyncHandler(async (req, res) => {
 
     try {
         const {id} = req.params;
-        const {title, description, image} = req.body;
+        const {title, description, category, image} = req.body;
 
         // Create post
         const post = new Post({
             author: id,
             title,
             description,
+            category,
             image,
             createdAt: new Date()
         });
