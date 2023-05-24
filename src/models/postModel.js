@@ -19,8 +19,7 @@ const postSchema = new mongoose.Schema({
         trim: true,
     }],
     category:{
-        type: String,
-        required: true,
+        type: String
     },
     createdAt: {
         type: Date,
